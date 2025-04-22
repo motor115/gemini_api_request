@@ -1,0 +1,31 @@
+steps:
+# Python の依存関係をインストール
+- name: 'python:3.10'
+  entrypoint: pip
+  args: ['install', '-t', '/workspace/function-source', '-r', 'requirements.txt']
+
+# ソースファイルをコピー
+- name: 'bash'
+  args: ['cp', 'main.py', '/workspace/function-source/']
+
+# Cloud Functions のデプロイ
+- name: 'gcr.io/cloud-builders/gcloud'
+  args:
+  - 'functions'
+  - 'deploy'
+  - 'gemini_text_api'
+  - '--gen2'
+  - '--region=${_REGION}'
+  - '--runtime=python310'
+  - '--source=/workspace/function-source'
+  - '--entry-point=gemini_text_api'
+  - '--trigger-http'
+  - '--service-account=${_SERVICE_ACCOUNT}'
+  - '--set-env-vars=PROJECT_ID=${PROJECT_ID},LOCATION=${_REGION}'
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE_ACCOUNT: gemini-api-sa@${PROJECT_ID}.iam.gserviceaccount.com
+
+options:
+  logging: CLOUD_LOGGING_ONLY
